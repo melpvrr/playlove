@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attrape les cœurs ! 💖</title>
+    <style>
+        body {
+            text-align: center;
+            background-color: #fff0f5;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            background: white;
+            display: block;
+            margin: auto;
+            border: 2px solid pink;
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+            font-size: 24px;
+        }
+        #overlay p {
+            background: rgba(255, 182, 193, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        #buttons {
+            margin-top: 20px;
+        }
+        #yes {
+            background-color: lightgreen;
+            border: none;
+            padding: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            position: relative;
+        }
+        #no {
+            background-color: lightcoral;
+            border: none;
+            padding: 10px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>attrape les cœurs ! 💖</h1>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    
+     <audio id="backgroundMusic" loop>
+        <source src="https://www.bensound.com/bensound-music/bensound-ukulele.mp3" type="audio/mp3">
+    </audio>
+    
+    
+    <div id="overlay">
+        <p> trop fort, tu es sûr de vouloir continuer de jouer ? avec tant de cœurs, je vais finir par être amoureuse de toi...</p>
+        <div id="buttons">
+            <button id="yes">Oui</button>
+            <button id="no">Non</button>
+        </div>
+    </div>
+    
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const overlay = document.getElementById("overlay");
+        const yesButton = document.getElementById("yes");
+        const noButton = document.getElementById("no");
+        const music = document.getElementById("backgroundMusic");
+        
+
+
+        let player = { x: 275, y: 350, width: 50, height: 50, speed: 5 };
+        let hearts = [];
+        let score = 0;
+        let rightPressed = false, leftPressed = false;
+        let gamePaused = false;
+        let yesEscapeCount = 0;
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight") rightPressed = true;
+            if (e.key === "ArrowLeft") leftPressed = true;
+        });
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "ArrowRight") rightPressed = false;
+            if (e.key === "ArrowLeft") leftPressed = false;
+        });
+
+        function createHeart() {
+            if (Math.random() < 0.05) {
+                hearts.push({ x: Math.random() * 580, y: 0, width: 20, height: 20 });
+            }
+        }
+
+        function update() {
+            if (gamePaused) return;
+
+            if (rightPressed && player.x < canvas.width - player.width) player.x += player.speed;
+            if (leftPressed && player.x > 0) player.x -= player.speed;
+            
+            hearts.forEach((heart, index) => {
+                heart.y += 3;
+                if (
+                    heart.y + heart.height > player.y &&
+                    heart.x < player.x + player.width &&
+                    heart.x + heart.width > player.x
+                ) {
+                    hearts.splice(index, 1);
+                    score++;
+                }
+            });
+
+            hearts = hearts.filter(heart => heart.y < canvas.height);
+            if (score >= 20 && !gamePaused) {
+                pauseGame();
+            }
+        }
+
+        function draw() {
+            if (gamePaused) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "pink";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.fillStyle = "red";
+            hearts.forEach(heart => ctx.fillRect(heart.x, heart.y, heart.width, heart.height));
+            ctx.fillStyle = "black";
+            ctx.fillText("Score: " + score, 10, 20);
+        }
+
+        function gameLoop() {
+            createHeart();
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function pauseGame() {
+            gamePaused = true;
+            overlay.style.display = "flex";
+        }
+
+        function resumeGame() {
+            gamePaused = false;
+            overlay.style.display = "none";
+        }
+
+        yesButton.addEventListener("mouseover", () => {
+            if (yesEscapeCount < 8) { 
+                yesButton.style.position = "absolute";
+                yesButton.style.left = Math.random() * (window.innerWidth - 100) + "px";
+                yesButton.style.top = Math.random() * (window.innerHeight - 50) + "px";
+                yesEscapeCount++;
+            }
+        });
+
+        yesButton.addEventListener("click", () => {
+            overlay.innerHTML = "trop tard, maintenant t'es à moi ! <3";
+            setTimeout(resumeGame, 2000);
+        });
+
+        noButton.addEventListener("click", () => {
+            overlay.innerHTML = "oh... tant pis 😢";
+            setTimeout(resumeGame, 2000);
+        });
+
+        gameLoop();
+    </script>
+</body>
+</html>
+
